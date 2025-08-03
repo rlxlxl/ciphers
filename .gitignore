@@ -1,0 +1,6 @@
+*.o
+*.exe
+.DS_Store
+.cipher_app
+.vscode/
+.build/
