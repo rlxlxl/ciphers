@@ -6,7 +6,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Iinclude
 
 # Исходные файлы
-SRCS = main.cpp src/gronspheld.cpp src/matrix.cpp
+SRCS = main.cpp src/gronspheld.cpp src/matrix.cpp src/simpleTableCipher.cpp
 
 # Объектные файлы (замена .cpp на .o)
 OBJS = $(SRCS:.cpp=.o)
@@ -23,7 +23,7 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Очистка
-clean:
+clear:
 	rm -f $(OBJS) $(TARGET)
 
 # Запуск программы
@@ -31,5 +31,5 @@ run: all
 	./$(TARGET)
 
 # Полная очистка после запуска
-run_clean: run
-	make clean
+run_clear: run
+	make clear
