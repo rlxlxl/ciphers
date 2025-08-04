@@ -3,6 +3,7 @@
 #include <locale>
 #include "gronspheld.hpp"
 #include "matrix.hpp"
+#include "simpleTableCipher.hpp"
 
 using namespace std;
 
@@ -18,7 +19,8 @@ int main() {
         wcout << L"Выберите способ шифрования:\n";
         wcout << L"1 - Матричный шифр\n";
         wcout << L"2 - Шифр Гронсфельда\n";
-        wcout << L"3 - Выход\n";
+        wcout << L"3 - Простая табличная перестановка\n";
+        wcout << L"0 - Выход\n";
         wcout << L"Ваш выбор: ";
 
         wcin >> choice;
@@ -32,10 +34,13 @@ int main() {
                 gronspheldEncrypt();
                 break;
             case 3:
-                wcout << L"Выход из программы.\n";
+                simpleTableCipher();
+                break;
+            case 0:
+                wcout << L"Выход из программы." << endl; 
                 return 0;
             default:
-                wcout << L"Неверный выбор, попробуйте ещё раз.\n";
+                wcout << L"Неверный выбор, попробуйте ещё раз." << endl;
         }
     }
 }
