@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -17,6 +18,7 @@ void simpleTableCipher() {
     int userChoice;
     bool encrypt;
     int rows, cols;
+    int inputChoice;
 
     wcout << L"1. Зашифровать\n2. Дешифровать" << endl;
     wcout << L"Ваш выбор: " ;
@@ -32,8 +34,35 @@ void simpleTableCipher() {
     }
 
     wstring text;
-    wcout << L"Введите текст: ";
-    getline(wcin, text);
+    
+    wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла" << endl;
+    wcout << L"Выберите способ ввода текста: ";
+    wcin >> inputChoice;
+    wcin.ignore();
+
+    if (inputChoice == 2) {
+        string filename;
+        wcout << L"Введите имя файла: ";
+        getline(wcin, text);  // Временно используем text для ввода имени файла
+        filename = string(text.begin(), text.end());  // Преобразуем wstring в string
+        text.clear();  // Очищаем text для дальнейшего использования
+        
+        ifstream file(filename);
+        if (!file.is_open()) {
+            wcout << L"Ошибка: не удалось открыть файл." << endl;
+            return;
+        }
+        
+        // Читаем содержимое файла
+        string fileContent((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+        file.close();
+        
+        // Преобразуем в wstring
+        text = wstring(fileContent.begin(), fileContent.end());
+    } else {
+        wcout << L"Введите текст: ";
+        getline(wcin, text);
+    }
 
     if (text.empty()) {
         wcout << L"Ошибка: вы ничего не ввели." << endl;
@@ -107,4 +136,3 @@ void simpleTableCipher() {
         wcout << L"Результат дешифровки: " << decipherText << endl;
     }
 }
-

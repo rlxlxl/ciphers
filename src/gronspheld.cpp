@@ -2,7 +2,7 @@
 #include <cctype>
 #include <iostream>
 #include <string>
-
+#include <fstream>
 using namespace std;
 
 bool isRussian(const wchar_t symbol)
@@ -21,14 +21,17 @@ void gronspheldEncrypt() {
     wstring text;
     wstring key;
     bool encrypt;
-    int userChooice;
-
+    bool readFromFile;
+    bool writeToFile;
+    int userChoice;
+    int inputChoice;
+    
     wcout << L"1. Зашифровать\n2. Дешифровать" << endl;
     wcout << L"Ваш выбор: " ;
-    wcin >> userChooice;
+    wcin >> userChoice;
     wcin.ignore();
 
-    switch(userChooice)
+    switch(userChoice)
     {
         case 1: encrypt = true; break;
         case 2: encrypt = false; break;
@@ -37,14 +40,39 @@ void gronspheldEncrypt() {
             return;
     }
 
-    wcout << L"Введите текст: ";
-    getline(wcin, text);
+    wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла" << endl;
+    wcout << L"Выберите способ ввода текста: ";
+    wcin >> inputChoice;
+    wcin.ignore();
+
+    if (inputChoice == 2) {
+        string filename;  
+        wcout << L"Введите имя файла: ";
+        getline(wcin, text);  
+        filename = string(text.begin(), text.end());  
+        text.clear();  
+        
+        ifstream file(filename);  
+        if (!file.is_open()) {
+            wcout << L"Ошибка: не удалось открыть файл." << endl;
+            return;
+        }
+        
+       
+        string fileContent((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+        file.close();
+        
+        
+        text = wstring(fileContent.begin(), fileContent.end());
+    } else {
+        wcout << L"Введите текст: ";
+        getline(wcin, text);
+    }
 
     if (text.empty()) {
-        wcout << L"Ошибка: вы ничего не ввели." << endl;
+        wcout << L"Ошибка: текст пуст." << endl;
         return;
     }
-    
 
     wcout << L"Введите ключ: ";
     getline(wcin, key);
@@ -104,17 +132,9 @@ void gronspheldEncrypt() {
         }
         else 
         {
-            if (encrypt)
-            {
-                result += static_cast<wchar_t>(shift + symbol);
-            }
-            else
-            {
-                result += static_cast<wchar_t>(shift - symbol);
-            }
+            result += symbol; // Оставляем символ без изменений
         }
     }
 
     wcout << L"Результат: " << result << endl;
-
 }

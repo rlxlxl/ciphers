@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <fstream>
 
 using namespace std;
 
@@ -81,14 +82,42 @@ wstring readMatrix(const vector<vector<wchar_t>>& matrix) {
 void matrix() {
     
     int choice;
+    int inputChoice;
 
     wcout << L"1. Шифровка\n2. Дешифровка\nВыберите: ";
     wcin >> choice;
     wcin.ignore();
 
-    wcout << L"Введите текст: ";
+    wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла" << endl;
+    wcout << L"Выберите способ ввода текста: ";
+    wcin >> inputChoice;
+    wcin.ignore();
+
     wstring text;
-    getline(wcin, text);
+
+    if (inputChoice == 2) {
+        string filename;
+        wcout << L"Введите имя файла: ";
+        getline(wcin, text);  // Временно используем text для ввода имени файла
+        filename = string(text.begin(), text.end());  // Преобразуем wstring в string
+        text.clear();  // Очищаем text для дальнейшего использования
+        
+        ifstream file(filename);
+        if (!file.is_open()) {
+            wcout << L"Ошибка: не удалось открыть файл." << endl;
+            return;
+        }
+        
+        // Читаем содержимое файла
+        string fileContent((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+        file.close();
+        
+        // Преобразуем в wstring
+        text = wstring(fileContent.begin(), fileContent.end());
+    } else {
+        wcout << L"Введите текст: ";
+        getline(wcin, text);
+    }
 
     int size = (int)ceil(sqrt(text.size()));
 
