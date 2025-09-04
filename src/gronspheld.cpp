@@ -25,6 +25,7 @@ void gronspheldEncrypt() {
     bool writeToFile;
     int userChoice;
     int inputChoice;
+    int outputChoice;
     
     wcout << L"1. Зашифровать\n2. Дешифровать" << endl;
     wcout << L"Ваш выбор: " ;
@@ -136,5 +137,28 @@ void gronspheldEncrypt() {
         }
     }
 
-    wcout << L"Результат: " << result << endl;
+    wcout << L"1. Вывод в консоль\n2. Вывод в файл" << endl;
+    wcout << L"Выберите способ вывода результата: ";
+    wcin >> outputChoice;
+    wcin.ignore();
+
+    if (outputChoice == 2) {
+        string outputFilename;
+        wcout << L"Введите имя файла для вывода: ";
+        getline(wcin, text);  // Временно используем text для ввода имени файла
+        outputFilename = string(text.begin(), text.end());  // Преобразуем wstring в string
+        
+        ofstream outputFile(outputFilename);
+        if (!outputFile.is_open()) {
+            wcout << L"Ошибка: не удалось создать файл для вывода." << endl;
+            return;
+        }
+        
+        // Преобразуем wstring в string для записи
+        string resultString(result.begin(), result.end());
+        outputFile << resultString;
+        outputFile.close();
+        
+        wcout << L"Результат успешно записан в файл: " << text << endl;
+    }
 }
