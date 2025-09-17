@@ -1,6 +1,10 @@
 #pragma once
-#include <vector>
+#include <iostream>
 #include <string>
+#include <vector>
+#include <cmath>
+#include <fstream>
+#include <stdexcept>
 
 using namespace std;
 
