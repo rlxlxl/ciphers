@@ -96,9 +96,17 @@ void gronspheldEncrypt() {
                 else
                     result += static_cast<wchar_t>(base + (symbol - base - shift + EN_ALPHABET_SIZE) % EN_ALPHABET_SIZE);
             }
+            else if (iswdigit(symbol))
+            {
+                int base = L'0';
+                if (encrypt)
+                    result += static_cast<wchar_t>(base + (symbol - base + shift) % 10);
+                else
+                    result += static_cast<wchar_t>(base + (symbol - base - shift + 10) % 10);
+            }
             else 
             {
-                result += symbol; // не буква — оставляем как есть
+                result += symbol;
             }
         }
 
