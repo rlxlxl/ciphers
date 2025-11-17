@@ -4,4 +4,5 @@
 .cipher_app
 .vscode/
 .build/
+test.bin
 test.txt

@@ -1,9 +1,4 @@
 #include "simpleTableCipher.hpp"
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <locale>
-#include <codecvt> // deprecated, но для простоты работы с UTF-8 в большинстве сред OK
 using namespace std;
 
 static std::wstring utf8_to_wstring(const std::string& s) {
@@ -18,133 +13,120 @@ static std::string wstring_to_utf8(const std::wstring& ws) {
 
 void simpleTableCipher() {
     try {
-        int userChoice;
-        int rows = 0, cols = 0;
-        int inputChoice;
-        int outputChoice;
-        bool encrypt;
+        int mode = 0, inputChoice = 0, outputChoice = 0;
 
-        wcout << L"1. Зашифровать\n2. Дешифровать\nВаш выбор: ";
-        if (!(wcin >> userChoice)) throw runtime_error("Некорректный ввод режима.");
-        wcin.ignore();
-        if (userChoice != 1 && userChoice != 2) throw runtime_error("Неверный выбор режима.");
-        encrypt = (userChoice == 1);
+        auto readInt = [](int& value, const wchar_t* prompt) {
+            while (true) {
+                wcout << prompt;
+                if (wcin >> value) {
+                    wcin.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
+                    return;
+                }
+                wcin.clear();
+                wcin.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
+                wcerr << L"Ошибка: введите число.\n";
+            }
+        };
 
-        wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла\nВаш выбор: ";
-        if (!(wcin >> inputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(mode, L"1. Шифрование\n2. Дешифрование\nВыберите: ");
+
+        if (mode != 1 && mode != 2)
+            throw runtime_error("Неверный выбор режима.");
+
+        readInt(inputChoice, L"1. Ввод вручную\n2. Чтение из файла\nВыберите способ ввода: ");
 
         wstring text;
 
-        if (inputChoice == 2) {
-            wstring wfilename;
-            wcout << L"Введите имя файла (UTF-8): ";
-            getline(wcin, wfilename);
-
-            string filename(wfilename.begin(), wfilename.end());
-            ifstream file(filename, ios::binary);
-            if (!file.is_open()) throw runtime_error("Не удалось открыть файл.");
-
-            string content((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-            file.close();
-
-            // корректно конвертируем UTF-8 -> wstring
-            text = utf8_to_wstring(content);
-        } else {
+        if (inputChoice == 1) {
             wcout << L"Введите текст: ";
             getline(wcin, text);
         }
+        else if (inputChoice == 2) {
+            wstring wfilename;
+            wcout << L"Введите имя файла: ";
+            getline(wcin, wfilename);
 
-        if (text.empty()) throw runtime_error("Текст пуст.");
+            string filename(wfilename.begin(), wfilename.end());
+            ifstream in(filename);
+            if (!in.is_open())
+                throw runtime_error("Не удалось открыть файл.");
 
-        wcout << L"Введите количество строк: ";
-        if (!(wcin >> rows) || rows <= 0) throw runtime_error("Некорректное количество строк.");
-
-        wcout << L"Введите количество столбцов: ";
-        if (!(wcin >> cols) || cols <= 0) throw runtime_error("Некорректное количество столбцов.");
-
-        wcin.ignore();
-
-        const int size = rows * cols;
-
-        // Если текст длиннее, усекаем (или можно расширить матрицу — по желанию)
-        if ((int)text.size() > size) {
-            wcout << L"Внимание: длина текста (" << text.size() << L") больше, чем rows*cols (" << size << L"). Текст будет усечён.\n";
-            text = text.substr(0, size);
+            string buffer((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
+            text = wstring(buffer.begin(), buffer.end());
+        }
+        else {
+            throw runtime_error("Неверный способ ввода.");
         }
 
-        // Дополняем пробелами если необходимо
-        if ((int)text.size() < size) text += wstring(size - text.size(), L' ');
+        if (text.empty())
+            throw runtime_error("Текст пуст.");
+
+        int columns = 0;
+        readInt(columns, L"Введите количество столбцов (ключ): ");
+        if (columns <= 0)
+            throw runtime_error("Количество столбцов должно быть положительным.");
 
         wstring result;
 
-        if (encrypt) {
-            // Записываем по столбцам, читаем по строкам
-            vector<vector<wchar_t>> table(rows, vector<wchar_t>(cols, L' '));
-            int k = 0;
-            for (int col = 0; col < cols; ++col) {
-                for (int row = 0; row < rows; ++row) {
-                    if (k >= size) break;
-                    table[row][col] = text[k++];
+        if (mode == 1) {
+            int rows = (text.size() + columns - 1) / columns;
+            vector<wstring> table(rows, wstring(columns, L' '));
+
+            int idx = 0;
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < columns; c++) {
+                    if (idx < text.size())
+                        table[r][c] = text[idx++];
                 }
             }
 
-            // Чтение по строкам
-            wstring cipher;
-            cipher.reserve(size);
-            for (int row = 0; row < rows; ++row)
-                for (int col = 0; col < cols; ++col)
-                    cipher += table[row][col];
+            for (int c = 0; c < columns; c++)
+                for (int r = 0; r < rows; r++)
+                    result += table[r][c];
 
-            result = cipher;
-            wcout << L"\nЗашифрованный текст:\n" << cipher << endl;
         } else {
-            // Дешифровка: записываем по строкам, читаем по столбцам
-            vector<vector<wchar_t>> table(rows, vector<wchar_t>(cols, L' '));
-            int k = 0;
-            for (int row = 0; row < rows; ++row) {
-                for (int col = 0; col < cols; ++col) {
-                    if (k >= size) break;
-                    table[row][col] = text[k++];
-                }
-            }
+            int rows = (text.size() + columns - 1) / columns;
+            vector<wstring> table(rows, wstring(columns, L' '));
 
-            wstring plain;
-            plain.reserve(size);
-            for (int col = 0; col < cols; ++col)
-                for (int row = 0; row < rows; ++row)
-                plain += table[row][col];
+            int idx = 0;
+            for (int c = 0; c < columns; c++)
+                for (int r = 0; r < rows; r++)
+                    if (idx < text.size())
+                        table[r][c] = text[idx++];
 
-            // убрать только конечные пробелы, добавленные в padding
-            while (!plain.empty() && plain.back() == L' ')
-                plain.pop_back();
+            for (int r = 0; r < rows; r++)
+                for (int c = 0; c < columns; c++)
+                    result += table[r][c];
 
-            result = plain;
-            wcout << L"\nРасшифрованный текст:\n" << plain << endl;
+            while (!result.empty() && result.back() == L' ')
+                result.pop_back();
         }
 
-        // Вывод результата
-        wcout << L"\n1. Вывод в консоль\n2. Вывод в файл\nВаш выбор: ";
-        if (!(wcin >> outputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(outputChoice, L"1. Вывести в консоль\n2. Сохранить в файл\nВыберите: ");
 
-        if (outputChoice == 2) {
-            wstring woutputFilename;
-            wcout << L"Введите имя файла для вывода (UTF-8): ";
-            getline(wcin, woutputFilename);
+        if (outputChoice == 1) {
+            wcout << L"Результат:\n" << result << endl;
+        }
+        else if (outputChoice == 2) {
+            wstring wout;
+            wcout << L"Введите имя файла для сохранения: ";
+            getline(wcin, wout);
 
-            string filename(woutputFilename.begin(), woutputFilename.end());
-            ofstream out(filename, ios::binary);
-            if (!out.is_open()) throw runtime_error("Не удалось создать файл.");
+            string filename(wout.begin(), wout.end());
+            ofstream out(filename);
+            if (!out.is_open())
+                throw runtime_error("Не удалось создать файл.");
 
-            string outStr = wstring_to_utf8(result);
-            out << outStr;
+            string utf8(result.begin(), result.end());
+            out << utf8;
             out.close();
-
-            wcout << L"Результат записан в файл: " << woutputFilename << endl;
+            wcout << L"Сохранено: " << wout << endl;
         }
-    }
-    catch (const exception& e) {
+        else {
+            throw runtime_error("Неверный выбор вывода.");
+        }
+
+    } catch (const exception& e) {
         wcerr << L"Ошибка: " << e.what() << endl;
     }
 }

@@ -1,17 +1,11 @@
 #include "matrix.hpp"
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <fstream>
 using namespace std;
 
-// Направления (вправо, вниз, влево, вверх)
+
 const int dr[] = {0, 1, 0, -1};
 const int dc[] = {1, 0, -1, 0};
 
-//
-// Генерация порядка обхода спирали
-//
+
 vector<pair<int,int>> buildSpiralOrder(int n) {
     vector<pair<int,int>> order;
     order.reserve(n * n);
@@ -49,9 +43,7 @@ vector<pair<int,int>> buildSpiralOrder(int n) {
     return order;
 }
 
-//
-// Шифрование — чтение исходного текста по спирали
-//
+
 wstring spiralEncrypt(const wstring& text, int n) {
     auto order = buildSpiralOrder(n);
 
@@ -66,9 +58,7 @@ wstring spiralEncrypt(const wstring& text, int n) {
     return encrypted;
 }
 
-//
-// Дешифровка — раскладывание текста по спирали обратно
-//
+
 wstring spiralDecrypt(const wstring& encrypted, int n) {
     auto order = buildSpiralOrder(n);
 
@@ -87,24 +77,33 @@ wstring spiralDecrypt(const wstring& encrypted, int n) {
     return result;
 }
 
-//
-// Главная функция
-//
+
 void matrix() {
     try {
-        int choice, inputChoice, outputChoice;
+        int choice = 0, inputChoice = 0, outputChoice = 0;
 
-        wcout << L"1. Шифровка\n2. Дешифровка\nВыберите: ";
-        if (!(wcin >> choice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        auto readInt = [](int& value, const wchar_t* prompt) {
+            while (true) {
+                wcout << prompt;
+                if (wcin >> value) {
+                    wcin.ignore(numeric_limits<streamsize>::max(), L'\n');
+                    return;
+                }
+                wcin.clear();
+                wcin.ignore(numeric_limits<streamsize>::max(), L'\n');
+                wcerr << L"Некорректный ввод. Повторите.\n";
+            }
+        };
 
-        wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла\nВыберите: ";
-        if (!(wcin >> inputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(choice, L"1. Шифровка\n2. Дешифровка\nВыберите: ");
+
+        if (choice != 1 && choice != 2)
+            throw runtime_error("Неверный выбор режима.");
+
+        readInt(inputChoice, L"1. Ввод с клавиатуры\n2. Чтение из файла\nВыберите: ");
 
         wstring text;
 
-        // Ввод текста
         if (inputChoice == 2) {
             wstring wfilename;
             wcout << L"Введите имя файла: ";
@@ -118,37 +117,34 @@ void matrix() {
             file.close();
 
             text = wstring(content.begin(), content.end());
-        } 
-        else {
+        }
+        else if (inputChoice == 1) {
             wcout << L"Введите текст: ";
             getline(wcin, text);
+        }
+        else {
+            throw runtime_error("Неверный выбор способа ввода.");
         }
 
         if (text.empty()) throw runtime_error("Текст пуст.");
 
-        // Размер матрицы
-        int n = (int)ceil(sqrt(text.size()));
+        int n = (int)ceil(sqrt((double)text.size()));
 
         wstring result;
 
         if (choice == 1) {
             result = spiralEncrypt(text, n);
-            wcout << L"Зашифрованный текст:\n" << result << endl;
-        } 
-        else if (choice == 2) {
-            result = spiralDecrypt(text, n);
-            wcout << L"Расшифрованный текст:\n" << result << endl;
-        } 
+        }
         else {
-            throw runtime_error("Неверный выбор.");
+            result = spiralDecrypt(text, n);
         }
 
-        // Вывод результата
-        wcout << L"1. Вывод в консоль\n2. Вывод в файл\nВыберите: ";
-        if (!(wcin >> outputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(outputChoice, L"1. Вывод в консоль\n2. Вывод в файл\nВыберите: ");
 
-        if (outputChoice == 2) {
+        if (outputChoice == 1) {
+            wcout << L"Результат:\n" << result << endl;
+        } 
+        else if (outputChoice == 2) {
             wstring woutputFilename;
             wcout << L"Введите имя файла для вывода: ";
             getline(wcin, woutputFilename);
@@ -162,6 +158,9 @@ void matrix() {
             out.close();
 
             wcout << L"Результат сохранён в файл: " << woutputFilename << endl;
+        } 
+        else {
+            throw runtime_error("Неверный выбор способа вывода.");
         }
 
     } 

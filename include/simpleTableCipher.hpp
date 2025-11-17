@@ -4,7 +4,9 @@
 #include <string>
 #include <fstream>
 #include <stdexcept>
-
+#include <locale>
+#include <codecvt>
+#include <limits>
 using namespace std;
 
 void simpleTableCipher();

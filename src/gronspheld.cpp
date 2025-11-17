@@ -12,47 +12,52 @@ bool isEnglish(const wchar_t symbol)
 
 void gronspheldEncrypt() {
     try {
-        wstring text;
-        wstring key;
+        wstring text, key;
+
+        int userChoice = 0;
+        int inputChoice = 0;
+        int outputChoice = 0;
+
+        auto readInt = [](int& value, const wchar_t* prompt) {
+            while (true) {
+                wcout << prompt;
+                if (wcin >> value) { 
+                    wcin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    return;
+                }
+
+                wcin.clear();
+                wcin.ignore(numeric_limits<streamsize>::max(), '\n');
+                wcerr << L"Некорректный ввод, попробуйте ещё раз.\n";
+            }
+        };
+
+        readInt(userChoice, L"1. Зашифровать\n2. Дешифровать\nВаш выбор: ");
         bool encrypt;
-        int userChoice;
-        int inputChoice;
-        int outputChoice;
-        
-        wcout << L"1. Зашифровать\n2. Дешифровать" << endl;
-        wcout << L"Ваш выбор: " ;
-        if (!(wcin >> userChoice)) throw runtime_error("Некорректный ввод режима.");
-        wcin.ignore();
+        if (userChoice == 1) encrypt = true;
+        else if (userChoice == 2) encrypt = false;
+        else throw runtime_error("Неверный выбор режима.");
 
-        switch(userChoice)
-        {
-            case 1: encrypt = true; break;
-            case 2: encrypt = false; break;
-            default:
-                throw runtime_error("Неверный выбор.");
-        }
-
-        wcout << L"1. Ввод с клавиатуры\n2. Чтение из файла" << endl;
-        wcout << L"Выберите способ ввода текста: ";
-        if (!(wcin >> inputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(inputChoice, L"1. Ввод с клавиатуры\n2. Чтение из файла\nВаш выбор: ");
 
         if (inputChoice == 2) {
-            wstring wfilename;  
+            wstring wfilename;
             wcout << L"Введите имя файла: ";
             getline(wcin, wfilename);
+
             string filename(wfilename.begin(), wfilename.end());
-            
             ifstream file(filename);
             if (!file.is_open()) throw runtime_error("Не удалось открыть файл.");
-            
+
             string fileContent((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
             file.close();
-            
+
             text = wstring(fileContent.begin(), fileContent.end());
-        } else {
+        } else if (inputChoice == 1) {
             wcout << L"Введите текст: ";
             getline(wcin, text);
+        } else {
+            throw runtime_error("Неверный выбор способа ввода.");
         }
 
         if (text.empty()) throw runtime_error("Текст пуст.");
@@ -68,69 +73,62 @@ void gronspheldEncrypt() {
         wstring result = L"";
         int keyLen = key.length();
 
-        const int RU_ALPHABET_SIZE = 32;
-        const int EN_ALPHABET_SIZE = 26;
+        const int RU = 32;
+        const int EN = 26;
 
         for (size_t i = 0; i < text.length(); ++i)
         {
             wchar_t symbol = text[i];
             int shift = key[i % keyLen] - L'0';
 
-            if (iswspace(symbol))
-            {
+            if (iswspace(symbol)) {
                 result += symbol;
             }
-            else if (isRussian(symbol))
-            {
+            else if (isRussian(symbol)) {
                 wchar_t base = iswupper(symbol) ? L'А' : L'а';
                 if (encrypt)
-                    result += static_cast<wchar_t>(base + (symbol - base + shift) % RU_ALPHABET_SIZE);
+                    result += (wchar_t)(base + (symbol - base + shift) % RU);
                 else
-                    result += static_cast<wchar_t>(base + (symbol - base - shift + RU_ALPHABET_SIZE) % RU_ALPHABET_SIZE);
+                    result += (wchar_t)(base + (symbol - base - shift + RU) % RU);
             }
-            else if (isEnglish(symbol))
-            {
+            else if (isEnglish(symbol)) {
                 wchar_t base = iswupper(symbol) ? L'A' : L'a';
                 if (encrypt)
-                    result += static_cast<wchar_t>(base + (symbol - base + shift) % EN_ALPHABET_SIZE);
+                    result += (wchar_t)(base + (symbol - base + shift) % EN);
                 else
-                    result += static_cast<wchar_t>(base + (symbol - base - shift + EN_ALPHABET_SIZE) % EN_ALPHABET_SIZE);
+                    result += (wchar_t)(base + (symbol - base - shift + EN) % EN);
             }
-            else if (iswdigit(symbol))
-            {
+            else if (iswdigit(symbol)) {
                 int base = L'0';
                 if (encrypt)
-                    result += static_cast<wchar_t>(base + (symbol - base + shift) % 10);
+                    result += (wchar_t)(base + (symbol - base + shift) % 10);
                 else
-                    result += static_cast<wchar_t>(base + (symbol - base - shift + 10) % 10);
+                    result += (wchar_t)(base + (symbol - base - shift + 10) % 10);
             }
-            else 
-            {
+            else {
                 result += symbol;
             }
         }
 
-        wcout << L"1. Вывод в консоль\n2. Вывод в файл" << endl;
-        wcout << L"Выберите способ вывода результата: ";
-        if (!(wcin >> outputChoice)) throw runtime_error("Некорректный ввод.");
-        wcin.ignore();
+        readInt(outputChoice, L"1. Вывод в консоль\n2. Вывод в файл\nВаш выбор: ");
 
         if (outputChoice == 2) {
             wstring woutputFilename;
-            wcout << L"Введите имя файла для вывода: ";
+            wcout << L"Введите имя файла: ";
             getline(wcin, woutputFilename);
 
             string outputFilename(woutputFilename.begin(), woutputFilename.end());
-            ofstream outputFile(outputFilename);
-            if (!outputFile.is_open()) throw runtime_error("Не удалось создать файл для вывода.");
+            ofstream out(outputFilename);
+            if (!out.is_open()) throw runtime_error("Не удалось создать файл.");
+            string res(result.begin(), result.end());
+            out << res;
+            out.close();
 
-            string resultString(result.begin(), result.end());
-            outputFile << resultString;
-            outputFile.close();
-            
-            wcout << L"Результат успешно записан в файл: " << woutputFilename << endl;
-        } else {
+            wcout << L"Результат записан в файл: " << woutputFilename << endl;
+        } else if (outputChoice == 1) {
             wcout << L"Результат: " << result << endl;
+        } else {
+            throw runtime_error("Неверный выбор способа вывода.");
         }
 
     } catch (const exception& e) {
