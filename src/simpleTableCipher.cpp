@@ -1,16 +1,6 @@
 #include "simpleTableCipher.hpp"
 using namespace std;
 
-static std::wstring utf8_to_wstring(const std::string& s) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-    return conv.from_bytes(s);
-}
-
-static std::string wstring_to_utf8(const std::wstring& ws) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-    return conv.to_bytes(ws);
-}
-
 void simpleTableCipher() {
     try {
         int mode = 0, inputChoice = 0, outputChoice = 0;
